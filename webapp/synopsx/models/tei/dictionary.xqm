@@ -17,7 +17,7 @@ declare namespace tei = 'http://www.tei-c.org/ns/1.0';
 declare function synopsx.models.tei.dictionary:listLemmas($lang, $lemma) {
   let $corpus := db:open($G:DBNAME)//TEI[@xml:id="dictionary_it"]
   (: should be the xml file instead, in a second argument like this : dn:open('db', 'dictionary_'||$lang||'.xml':)
-  let $meta as map(*) := {'title' : 'Liste des lemmes'}
+  let $meta as map(*) := map {'title' : 'Liste des lemmes'}
   let $content as map(*) :=  map:merge(
     for $item in $corpus//*:entry 
       return 

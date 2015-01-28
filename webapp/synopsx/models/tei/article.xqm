@@ -33,9 +33,9 @@ declare namespace tei = 'http://www.tei-c.org/ns/1.0'; (: Add namespaces :)
  : This function creates a map of two maps : one for metadata, one for content data
  :)
 declare function listArticles() {
-  let $texts := db:open($G:BLOGDB)//tei:TEI
+  let $texts := db:open($G:BLOGDB)//*:TEI
   let $lang := 'fr'
-  let $meta := {
+  let $meta := map {
     'title' : 'Liste d’articles', 
     'quantity' : getQuantity($texts, 'article'), (: @todo internationalize :)
     'author' : getAuthors($texts),
@@ -44,8 +44,8 @@ declare function listArticles() {
     'keywords' : getKeywords($texts, $lang)
     }
   let $content := map:merge(
-    for $item in $texts/tei:teiHeader 
-    order by ($item//tei:publicationStmt/tei:date/@when) descending (: sans effet :)
+    for $item in $texts/*:teiHeader 
+    order by ($item//*:publicationStmt/*:date/@when) descending (: sans effet :)
     return  map:entry( fn:generate-id($item), header($item) )
     )
   return  map{
@@ -54,13 +54,15 @@ declare function listArticles() {
     }
 };
 
+
+
 (:~
  : This function creates a map of two maps : one for metadata, one for content data
  :)
 declare function article($entryId as xs:string) {
-  let $article := db:open($G:BLOGDB)/tei:TEI[//tei:sourceDesc[@xml:id=$entryId]]
+  let $article := db:open($G:BLOGDB)/*:TEI[//*:sourceDesc[@xml:id=$entryId]]
   let $lang := 'fr'
-  let $meta := {
+  let $meta := map {
     'title' : getTitles($article, $lang), 
     'author' : getAuthors($article),
     'copyright'  : getCopyright($article),
@@ -101,9 +103,9 @@ declare function header($item as element()) {
  : This function creates a map of two maps : one for metadata, one for content data
  :)
 declare function listCorpus() {
-  let $texts := db:open($G:DBNAME)//tei:teiCorpus
+  let $texts := db:open($G:DBNAME)//*:teiCorpus
   let $lang := 'fr'
-  let $meta := {
+  let $meta := map {
     'title' : 'Liste d’articles', 
     'quantity' : getQuantity($texts, 'article'), (: @todo internationalize :)
     'author' : getAuthors($texts),
@@ -112,8 +114,8 @@ declare function listCorpus() {
     'keywords' : getKeywords($texts, $lang)
     }
   let $content as map(*) := map:merge(
-    for $item in $texts/tei:teiHeader 
-    order by $item//tei:publicationStmt/tei:date/@when (: sans effet :)
+    for $item in $texts/*:teiHeader 
+    order by $item//*:publicationStmt/*:date/@when (: sans effet :)
     return  map:entry( fn:generate-id($item), header($item) )
     )
   return  map{
@@ -131,13 +133,13 @@ declare function listCorpus() {
  :)
 declare function corpusHeader($item as element()) {
   let $title as element()* := (
-    $item//tei:titleStmt/tei:title
+    $item//*:titleStmt/*:title
     )[1]
   let $date as element()* := (
-    $item//tei:teiHeader//tei:date
+    $item//*:teiHeader//*:date
     )[1]
   let $author  as element()* := (
-    $item//tei:titleStmt/tei:author
+    $item//*:titleStmt/*:author
     )[1]
   return map {
     'title'      : $title/text() ,
@@ -152,9 +154,9 @@ declare function corpusHeader($item as element()) {
  :)
 declare function synopsx.models.tei.article:listTexts() {
   let $corpus := db:open($G:DBNAME)
-  let $meta as map(*) := {'title' : 'Liste des textes'}
+  let $meta as map(*) := map {'title' : 'Liste des textes'}
   let $content as map(*) :=  map:merge(
-    for $item in $corpus//tei:teiCorpus/tei:teiHeader       
+    for $item in $corpus//*:teiCorpus/*:teiHeader       
       return  map:entry(fn:generate-id($item), teiHeader($item))
     )
   return  map{
@@ -169,9 +171,9 @@ declare function synopsx.models.tei.article:listTexts() {
  :)
 declare function teiHeader($teiHeader) as map(*) {
  map {
-    'title' : ($teiHeader//tei:titleStmt/*:title/text()),
-    'date' : ($teiHeader//tei:date/text()),
-    'author' : ($teiHeader//tei:author/text())
+    'title' : ($teiHeader//*:titleStmt/*:title/text()),
+    'date' : ($teiHeader//*:date/text()),
+    'author' : ($teiHeader//*:author/text())
   }
 };
 
@@ -181,9 +183,9 @@ declare function teiHeader($teiHeader) as map(*) {
  :)
 declare function listMentioned() {
   let $corpus := db:open($G:DBNAME)
-  let $meta as map(*) := {'title' : 'Liste des autonymes'}
+  let $meta as map(*) := map {'title' : 'Liste des autonymes'}
   let $content as map(*) :=  map:merge(
-    for $item in $corpus//tei:mentioned 
+    for $item in $corpus//*:mentioned 
       
       return  map:entry(fn:generate-id($item), mentioned($item))
     )
@@ -216,7 +218,7 @@ declare function mentioned($item) as map(*) {
  : @return a tei abstract
  :)
 declare function getAbstract($content as element()*, $lang as xs:string){
-  $content//tei:front//tei:div[@type='abstract'][fn:starts-with(@xml:lang, $lang)]
+  $content//*:front//*:div[@type='abstract'][fn:starts-with(@xml:lang, $lang)]
 };
 
 (:~
@@ -227,7 +229,7 @@ declare function getAbstract($content as element()*, $lang as xs:string){
 declare function getAuthors($content as element()*){
   fn:string-join(
     fn:distinct-values(
-      for $name in $content//tei:respStmt[tei:resp/@key='aut'] | $content//tei:principal
+      for $name in $content//*:respStmt[*:resp/@key='aut'] | $content//*:principal
       return fn:normalize-space(getName($name))
       ), 
     ', ')
@@ -242,7 +244,7 @@ declare function getAuthors($content as element()*){
  : @toto make it better !
  :)
 declare function getCopyright($content){
-  ($content//tei:licence/@target)[1]
+  ($content//*:licence/@target)[1]
 };
 
 (:~
@@ -254,7 +256,7 @@ declare function getCopyright($content){
  :)
 declare function getDate($content as element()*, $dateFormat as xs:string){
   fn:normalize-space(
-    $content//tei:publicationStmt/tei:date
+    $content//*:publicationStmt/*:date
   )
 };
 
@@ -266,7 +268,7 @@ declare function getDate($content as element()*, $dateFormat as xs:string){
  :)
 declare function getDescription($content as element()*, $lang as xs:string){
   fn:string-join(
-    for $abstract in $content//tei:div[parent::tei:div[fn:starts-with(@xml:lang, $lang)]][@type='abstract']/tei:p 
+    for $abstract in $content//*:div[parent::*:div[fn:starts-with(@xml:lang, $lang)]][@type='abstract']/*:p 
     return fn:substring(fn:normalize-space($abstract), 0, 90),
     ', ')
 };
@@ -279,7 +281,7 @@ declare function getDescription($content as element()*, $lang as xs:string){
  :)
 declare function getKeywords($content as element()*, $lang as xs:string){
   fn:string-join(
-    for $terms in fn:distinct-values($content//tei:keywords[fn:starts-with(@xml:lang, $lang)]/tei:term) 
+    for $terms in fn:distinct-values($content//*:keywords[fn:starts-with(@xml:lang, $lang)]/*:term) 
     return fn:normalize-space($terms), 
     ', ')
 };
@@ -291,8 +293,8 @@ declare function getKeywords($content as element()*, $lang as xs:string){
  :)
 declare function getName($named as element()*){
   fn:normalize-space(
-    for $person in $named/tei:persName 
-    return ($person/tei:forename || ' ' || $person/tei:surname)
+    for $person in $named/*:persName 
+    return ($person/*:forename || ' ' || $person/*:surname)
     )
 };
 
@@ -319,7 +321,7 @@ declare function getQuantity($content as element()*, $unit as xs:string){
 declare function getSubtitle($content as element()*, $lang as xs:string){
   fn:string-join(
     fn:normalize-space(
-      for $title in $content//tei:titleStmt/tei:title[@type='sub']
+      for $title in $content//*:titleStmt/*:title[@type='sub']
       return $title[fn:starts-with(@xml:lang, $lang)]
       ),
     ', ')
@@ -331,7 +333,7 @@ declare function getSubtitle($content as element()*, $lang as xs:string){
  : @return a plain xml-tei document
  :)
 declare function getXmlTeiById($id as xs:string){
-  db:open($G:BLOGDB)//tei:TEI[//tei:sourceDesc[@xml-id=$id]]
+  db:open($G:BLOGDB)//*:TEI[//*:sourceDesc[@xml-id=$id]]
 };
 
 (:~
@@ -343,7 +345,7 @@ declare function getXmlTeiById($id as xs:string){
 declare function getTitle($content as element()*, $lang as xs:string){
   fn:string-join(
     fn:normalize-space(
-      for $title in $content//tei:titleStmt/tei:title[@type='main']
+      for $title in $content//*:titleStmt/*:title[@type='main']
       return $title[fn:starts-with(@xml:lang, $lang)]
       ),
     ', ')
@@ -357,7 +359,7 @@ declare function getTitle($content as element()*, $lang as xs:string){
  :)
 declare function getTitles($content as element()*, $lang as xs:string){
   fn:string-join(
-    for $title in $content//tei:titleStmt/tei:title
+    for $title in $content//*:titleStmt/*:title
     return fn:normalize-space($title[fn:starts-with(@xml:lang, $lang)]),
     ', ')
 };
@@ -370,7 +372,7 @@ declare function getTitles($content as element()*, $lang as xs:string){
  : @toto print the real uri
  :)
 declare function getUrl($content as element()*, $lang as xs:string){
-  $G:PROJECTBLOGROOT || $content//tei:sourceDesc/@xml:id
+  $G:PROJECTBLOGROOT || $content//*:sourceDesc/@xml:id
 };
 
 
@@ -379,12 +381,12 @@ declare function getUrl($content as element()*, $lang as xs:string){
  : This function return the corpus title
  :)
 declare function title() as element(){ 
-  (db:open($G:DBNAME)//tei:titleStmt/tei:title)[1]
+  (db:open($G:DBNAME)//*:titleStmt/*:title)[1]
 }; 
  
 (:~
  : This function return a titles list
  :)
 declare function listItems() as element()* { 
-  db:open($G:DBNAME)//tei:titleStmt/tei:title
+  db:open($G:DBNAME)//*:titleStmt/*:title
 };

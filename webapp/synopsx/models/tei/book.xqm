@@ -34,7 +34,7 @@ declare namespace tei = 'http://www.tei-c.org/ns/1.0'; (: Add namespaces :)
  :)
 declare function synopsx.models.tei.book:listTexts() {
   let $corpus := db:open($G:DBNAME) (: openning the database:)
-  let $meta as map(*) := {
+  let $meta as map(*) := map {
     'title' : 'Liste des textes' (: title page:)
     }
   let $content as map(*) := map:merge(
@@ -80,10 +80,10 @@ declare function synopsx.models.tei.book:getTextHeader($item as element()) {
  :)
 declare function synopsx.models.tei.book:buildCommonTextStructure() {
    let $corpus := db:open($G:DBNAME) (: openning the database:)
-   let $meta as map(*) := {
+   let $meta as map(*) := map {
     'title' : 'Structure du texte' 
     }
-     let $content as map(*) := {
+     let $content as map(*) := map {
     'title' : 'TODO' 
     }
   (:~let $content := '<structure><item>'

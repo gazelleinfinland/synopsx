@@ -17,7 +17,7 @@ declare namespace tei = 'http://www.tei-c.org/ns/1.0';
 declare function synopsx.models.xml.equivalence:listEquivalences($lang, $lemma) {
   let $corpus := db:open($G:DBNAME)/equivalences 
   (: should be the xml file instead, in a second argument like this : dn:open('db', 'equivalences.xml':)
-  let $meta as map(*) := {'title' : 'Liste des equivalences'}
+  let $meta as map(*) := map{'title' : 'Liste des equivalences'}
   let $content as map(*) :=  map:merge(
     for $item in $corpus//equivalence 
      return

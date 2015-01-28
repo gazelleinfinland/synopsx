@@ -47,17 +47,21 @@ declare
   %output:method("xhtml") (: TODO content negociation :)
   function corpusList(){
     let $options := map {} (: specify an xslt mode and other kind of option :)
-    let $layout := $G:TEMPLATES || 'simpleHtml.xhtml' (: global layout file template :)
-    let $pattern := $G:TEMPLATES || 'tei_mentioned_list.xhtml' (: fragment layout template file (to be repeated or not) :)
-    return synopsx.mappings.htmlWrapping:globalWrapper
-      (
-        synopsx.models.tei:listTexts(), $options, $layout, $pattern
-      )
+    let $layout := $G:TEMPLATES || 'tei_chapters.xhtml' (: global layout file template :)
+    let $pattern := $G:TEMPLATES || 'tei_chapter.xhtml' (: fragment layout template file (to be repeated or not) :)
+    return 
+       copy $page := fn:doc($G:TEMPLATES || 'html.xhtml')
+       modify (replace node $page//*:div[@title="main"] with synopsx.mappings.htmlWrapping:globalWrapper(synopsx.models.tei.article:listArticles(), $options, $layout, $pattern),
+     replace value of node $page//*:div[@id="site-title"] with <h1>Mon titre</h1>
+   )
+       return $page   
 };
 
-declare 
+
+
+(: declare 
   %restxq:path('/test')
-  %output:method("xhtml") (: TODO content negociation :)
+  %output:method("xhtml") 
   function test(){
     let $params := map { 
       'title' : 'test', 
@@ -69,7 +73,7 @@ declare
   }
   return wrapper(fn:doc($G:TEMPLATES || 'html.xhtml'), $params)
       
-};
+}; :)
 
 
 (: Aim : 
@@ -77,7 +81,7 @@ keys of the map are removed recursively
 CASE 1 : Test if no more key, then return the document (fully built)
 CASE 2 : Get first key, 
 :)
-declare %updating function wrapper ($template as document-node(), $params as map(*)) as document-node()* {
+declare function wrapper ($template as document-node(), $params as map(*)) as document-node()* {
     let $result := 
     
       (:CASE 1      
@@ -142,8 +146,8 @@ declare
   %output:doctype-public("xhtml")
 function index() {
   let $params := map {
-    "project" := "synopsx",
-    "dataType" := "home"
+    "project" : "synopsx",
+    "dataType" : "home"
   }
   return main($params)
 };
@@ -155,8 +159,8 @@ declare
   %output:doctype-public("xhtml")
 function index($project) {
   let $params := map {
-    "project" := $project,
-    "dataType" := "home"
+    "project" : $project,
+    "dataType" : "home"
   }
   return main($params)
 };
@@ -169,8 +173,8 @@ declare
   %output:doctype-public("xhtml")
 function index($project, $dataType) {
   let $params := map {
-    "project" := $project,
-    "dataType" := $dataType
+    "project" : $project,
+    "dataType" : $dataType
   }
   return main($params)
 };
@@ -182,9 +186,9 @@ declare
   %output:doctype-public("xhtml")
 function index($project, $dataType, $value) {
   let $params := map {
-    "project" := $project,
-    "dataType" := $dataType,
-    "value" := $value
+    "project" : $project,
+    "dataType" : $dataType,
+    "value" : $value
   }
   return main($params)
 };
@@ -196,10 +200,10 @@ declare
   %output:doctype-public("xhtml")
 function index($project, $dataType, $value, $option) {
   let $params := map {
-    "project" := $project,
-    "dataType" := $dataType,
-    "value" := $value,
-    "option" := $option
+    "project" : $project,
+    "dataType" : $dataType,
+    "value" : $value,
+    "option" : $option
   }
   return main($params)
 };
