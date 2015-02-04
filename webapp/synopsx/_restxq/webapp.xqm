@@ -35,7 +35,7 @@ import module namespace synopsx.mappings.htmlWrapping = 'synopsx.mappings.htmlWr
 declare default function namespace 'synopsx.webapp';
 
 (:~
- : This resource function return the corpus item
+ : this resource function return the corpus item
  : 
  : @return an xhtml page binding layout templates and models
  : @rmq demo function for templating
@@ -55,34 +55,18 @@ declare
 
 
 
-
-(: Where everything will be decided later on :)
-declare function main($params){
-    (:let $project := map:get($params,'project'):)
-    $G:HOME
-};
-
-(: Where everything will be decided later on :)
-declare function main($params, $options, $layout){
-    (:let $project := map:get($params,'project'):)
-    copy $instanciated := fn:doc($layout) modify (
-      (: adding the @data-model to the layout nodes when missing with the model specified in $params->dataType
-      :)
-      for $node in $instanciated//*[@data-function][fn:not(@data-model)]
-      return insert node attribute data-model {map:get($params, 'dataType')} into $node
-    )
-   (:  return $instanciated  :)
-     return  synopsx.mappings.htmlWrapping:globalWrapper($params, $options, $instanciated) 
-};
-
 (:~
+ : ~:~:~:~:~:~:~:~:~
  : To be use to implement the webapp entry points
  : Used in the last version of synopsx  
- :
+ : ~:~:~:~:~:~:~:~:~
  : These five functions analyze the given path and retrieve the data
  :
  :)
 
+(:~
+ : this resource function 
+ :)
 declare 
   %restxq:path("")
   %output:method("xhtml")
@@ -96,6 +80,9 @@ function index() {
   return main($params)
 };
 
+(:~
+ : this resource function 
+ :)
 declare 
   %restxq:path("{$project}")
   %output:method("xhtml")
@@ -109,7 +96,9 @@ function index($project) {
   return main($params)
 };
 
-
+(:~
+ : this resource function 
+ :)
 declare 
   %restxq:path("{$project}/{$dataType}")
   %output:method("xhtml")
@@ -123,6 +112,14 @@ function index($project, $dataType) {
   return main($params)
 };
 
+(:~
+ : this resource function is a three entry points
+ : @param $project project name
+ : @param $dataType resource type
+ : @param $value resource id
+ : @return builds a $params map with url path, and calls main function with $params, $options and a $layout constructed by the project
+ : @todo give options e.g. language from browser
+ :)
 declare
   %restxq:path("{$project}/{$dataType}/{$value}")
   %output:method("xhtml")
@@ -134,14 +131,15 @@ function index($project, $dataType, $value) {
     "dataType" : $dataType,
     "value" : $value
   }
-  
   let $options := map {} (: specify an xslt mode and other kind of option :)
   let $layout  := $G:TEMPLATES || $project || '.xhtml'
- (:  let $pattern  := $G:TEMPLATES || 'blogListSerif.xhtml' :)
-  
+  (:  let $pattern  := $G:TEMPLATES || 'blogListSerif.xhtml' :)
   return main($params, $options, $layout)
 };
 
+(:~
+ : this resource function 
+ :)
 declare 
   %restxq:path("{$project}/{$dataType}/{$value}/{$option}")
   %output:method("xhtml")
@@ -154,5 +152,71 @@ function index($project, $dataType, $value, $option) {
     "value" : $value,
     "option" : $option
   }
-  return main($params)
+  return 'todo'
+};
+
+(:~
+ : this resource function gets texts containing a given persName
+ : @param $project project name
+ : @param $value resource id
+ : @return builds a $params map with url path, and calls main function with $params, $options and a $layout constructed by the project
+ : @todo give options e.g. language from browser
+ :)
+declare
+  %restxq:path("{$project}/persName/{$value}")
+  %output:method("xhtml")
+  %output:omit-xml-declaration("no")
+  %output:doctype-public("xhtml")
+function textsByPerson($project, $value) {
+  let $params := map {
+    "project" : $project,
+    "dataType" : 'persName',
+    "value" : $value,
+    "model" : 'tei'
+  }
+  let $options := map {} (: specify an xslt mode and other kind of option :)
+  let $template := 'multi.xhtml'
+  let $layout  := getLayoutPath($params, $template)
+  (:  let $pattern  := $G:TEMPLATES || 'blogListSerif.xhtml' :)
+  return main($params, $options, $layout)
+};
+
+(:~
+ : ~:~:~:~:~:~:~:~:~
+ : Function library
+ : ~:~:~:~:~:~:~:~:~
+ :)
+
+(:~
+ : this function built the layout path based on the project hierarchy
+ :)
+ declare function getLayoutPath($params, $template){
+   if (file:exists( $G:PROJECTS || map:get($params, 'project') || '/' || $template) )
+   then $G:PROJECTS || map:get($params, 'project') || '/' || $template
+   else $G:TEMPLATES || $template
+ };
+
+(:~
+ : this function (temporary) calls entry points
+ :)
+declare function main($params){
+    (:let $project := map:get($params,'project'):)
+    $G:HOME
+};
+
+(:~
+ : this function is Where everything will be decided later on
+ : @param $params params built from the url
+ : @param $options options e.g. locals, etc.
+ : @param $layout layout for the project
+ : @return adding the @data-model to the layout nodes when missing with the model specified in $params->dataType
+ copy the selected layout and modify to prepare data injection
+ return the template instanciated 
+ :) 
+declare function main($params as map(*), $options as map(*), $layout as xs:string){
+  copy $template := fn:doc($layout) modify (
+    for $node in $template//*[@data-function][fn:not(@data-model)]
+    return insert node attribute data-model {map:get($params, 'model')} into $node
+    )
+    return synopsx.mappings.htmlWrapping:globalWrapper($params, $options, $template)
 };
